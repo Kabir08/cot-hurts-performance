@@ -1,0 +1,11 @@
+model,prompt_type,total,correct,incorrect
+llama-3.1-8b-instant,concise_cot,240,13,227
+llama-3.1-8b-instant,cot,240,2,238
+llama-3.1-8b-instant,direct,240,157,83
+llama-3.3-70b-versatile,concise_cot,240,20,220
+llama-3.3-70b-versatile,cot,240,16,224
+llama-3.3-70b-versatile,direct,240,191,49
+meta-llama/llama-4-maverick-17b-128e-instruct,concise_cot,240,15,225
+meta-llama/llama-4-maverick-17b-128e-instruct,cot,240,3,237
+meta-llama/llama-4-maverick-17b-128e-instruct,direct,240,144,96
+model,prompt_type,2,0,2

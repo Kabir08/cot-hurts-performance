@@ -1,0 +1,202 @@
+\documentclass[11pt]{article}
+
+\usepackage{times}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{array}
+
+\title{\textbf{When Chain-of-Thought Confounds Evaluation:\\
+An Empirical Study of Prompting and Answer Extraction}}
+
+\author{
+Kabir Potdar\\
+Independent Researcher\\
+\texttt{kabirpotdar@email.com}
+}
+
+\date{December 2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Chain-of-thought (CoT) prompting is widely used to improve large language model performance by encouraging explicit step-by-step reasoning. While prior work has demonstrated substantial gains from CoT on complex reasoning tasks, its interaction with automated evaluation pipelines remains underexplored. In this work, we conduct an empirical study of three prompting strategies—direct answering, full chain-of-thought, and concise chain-of-thought—across three open-weight language models and four task categories spanning arithmetic, factual question answering, short reasoning, and symbolic logic.
+
+We find that, under common exact-match evaluation procedures, CoT prompting leads to dramatic measured accuracy degradation relative to direct prompting, with drops ranging from 58.75\% to 72.92\% across models. Through detailed failure analysis, we show that many of these failures arise not from incorrect reasoning, but from a mismatch between verbose CoT outputs and simple answer extraction heuristics, which frequently fail to recover the final answer from intermediate reasoning steps.
+
+Our results highlight a critical and underappreciated interaction between prompting strategy and evaluation methodology. We argue that naïvely applying chain-of-thought prompting without corresponding changes to answer extraction and scoring can substantially misrepresent model capabilities. These findings suggest that the effectiveness of reasoning prompts must be assessed jointly with evaluation design, and that direct prompting may remain preferable in many practical settings with automated scoring.
+\end{abstract}
+
+\section{Introduction}
+
+\subsection{Background}
+
+Chain-of-thought (CoT) prompting, introduced by Wei et al.~\cite{wei2022cot}, has demonstrated success in enabling language models to solve complex reasoning tasks through explicit step-by-step explanations. The technique has been widely adopted in both academic research and production systems, with the intuition that encouraging models to ``think step by step'' improves reasoning capability.
+
+However, recent observations suggest that this benefit may not be universal. In many real-world applications, simple direct prompts often yield comparable or superior results. This raises an important question: under what conditions does CoT help, and when does it hurt?
+
+\subsection{Research Questions}
+
+We investigate the following questions:
+
+\begin{itemize}
+\item Does CoT uniformly improve performance across models and task types?
+\item How do different CoT variants compare to direct prompting?
+\item Are there systematic task or difficulty regimes where CoT fails?
+\item What characterizes cases where direct prompting succeeds but CoT fails?
+\end{itemize}
+
+\subsection{Contributions}
+
+\begin{itemize}
+\item Empirical evidence that CoT can significantly degrade measured accuracy under automated evaluation
+\item Quantification of performance deltas across models and tasks
+\item Analysis of failure modes arising from answer extraction mismatch
+\end{itemize}
+
+\section{Related Work}
+
+\subsection{Chain-of-Thought Prompting}
+
+Wei et al.~\cite{wei2022cot} introduced CoT prompting to elicit reasoning in large language models. Subsequent work explored few-shot CoT, automatic CoT, and least-to-most prompting~\cite{kojima2022}.
+
+\subsection{Prompt Engineering}
+
+Prior studies show that prompt phrasing can have non-monotonic effects on performance~\cite{reynolds2021,white2023}. Verbosity and structure can interact unexpectedly with downstream evaluation.
+
+\subsection{Task-Specific Sensitivity}
+
+Different task types exhibit varying sensitivity to prompting strategies. Some benefit from reasoning guidance, while others are reliably solved via direct pattern matching.
+
+\section{Methodology}
+
+\subsection{Dataset}
+
+We construct a dataset of 240 questions across four task categories and three difficulty levels.
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+Task & Easy & Medium & Hard & Total \\
+\midrule
+Arithmetic & 20 & 20 & 20 & 60 \\
+Factual QA & 20 & 20 & 20 & 60 \\
+Reasoning & 20 & 20 & 20 & 60 \\
+Symbolic Logic & 20 & 20 & 20 & 60 \\
+\midrule
+Total & 80 & 80 & 80 & 240 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Prompting Strategies}
+
+We evaluate:
+\begin{enumerate}
+\item Direct answering
+\item Full Chain-of-Thought
+\item Concise Chain-of-Thought
+\end{enumerate}
+
+\subsection{Models}
+
+Experiments use three open-weight models accessed via the Groq API:
+\begin{itemize}
+\item LLaMA-3.1-8B
+\item LLaMA-3.3-70B
+\item LLaMA-4-Maverick
+\end{itemize}
+
+\subsection{Evaluation Protocol}
+
+Outputs are normalized using lowercase conversion, boolean handling, first-match numeric extraction, punctuation removal, and exact-match comparison. This reflects common automated evaluation practice.
+
+\section{Results}
+
+\subsection{Accuracy by Model and Prompting Strategy}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+Model & Direct & CoT & Concise CoT \\
+\midrule
+LLaMA-3.1-8B & 65.42\% & 0.83\% & 5.42\% \\
+LLaMA-3.3-70B & 79.58\% & 6.67\% & 8.33\% \\
+LLaMA-4-Maverick & 60.00\% & 1.25\% & 6.25\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Accuracy Degradation}
+
+\begin{center}
+\begin{tabular}{lc}
+\toprule
+Model & CoT -- Direct \\
+\midrule
+LLaMA-3.1-8B & -64.58\% \\
+LLaMA-3.3-70B & -72.92\% \\
+LLaMA-4-Maverick & -58.75\% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/accuracy_vs_difficulty.png}
+\caption{Measured accuracy vs task difficulty.}
+\label{fig:difficulty}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\linewidth]{figures/accuracy_by_task.png}
+\caption{Measured accuracy by task category.}
+\label{fig:task}
+\end{figure}
+
+\section{Analysis of CoT Failures}
+
+We define a CoT failure as a case where direct prompting is correct but CoT prompting is incorrect. Analysis of 471 such cases reveals systematic answer extraction failures, numeric interference, and reasoning overwrite phenomena.
+
+\section{Discussion}
+
+Prompting strategy and evaluation protocol form a coupled system. Verbose reasoning outputs interact poorly with simple extraction heuristics, leading to misleading performance estimates.
+
+\section{Conclusion}
+
+Chain-of-thought prompting can substantially degrade measured accuracy under automated evaluation. These findings highlight the necessity of jointly designing prompting strategies and evaluation pipelines.
+
+\bibliographystyle{plain}
+\begin{thebibliography}{9}
+
+\bibitem{wei2022cot}
+Wei, J. et al. (2022).
+Chain-of-Thought Prompting Elicits Reasoning in Large Language Models.
+arXiv:2201.11903.
+
+\bibitem{kojima2022}
+Kojima, T. et al. (2022).
+Large Language Models are Zero-Shot Reasoners.
+arXiv:2205.11916.
+
+\bibitem{reynolds2021}
+Reynolds, L., McDonell, K. (2021).
+Prompt Programming for Large Language Models.
+arXiv:2102.07350.
+
+\bibitem{white2023}
+White, J. et al. (2023).
+A Prompt Pattern Catalog to Enhance Prompt Engineering.
+arXiv:2302.11382.
+
+\end{thebibliography}
+
+\end{document}

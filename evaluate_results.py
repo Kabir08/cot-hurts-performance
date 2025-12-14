@@ -30,7 +30,7 @@ def normalize(text):
     if text.startswith("no"):
         return "no"
 
-    # numeric extraction (ints / floats)
+    # numeric extraction (first match only)
     numbers = re.findall(r"-?\d+\.?\d*", text)
     if numbers:
         return numbers[0]
@@ -101,6 +101,31 @@ cot_delta.to_csv(
 )
 
 print("[OK] Saved summary tables to /tables/")
+
+# =========================
+# ERROR COUNTS (IMPORTANT)
+# =========================
+
+# Total / correct / incorrect by model × prompt
+counts_model_prompt = (
+    df.groupby(["model", "prompt_type"])["correct"]
+      .agg(
+          total="count",
+          correct="sum"
+      )
+      .reset_index()
+)
+
+counts_model_prompt["incorrect"] = (
+    counts_model_prompt["total"] - counts_model_prompt["correct"]
+)
+
+counts_model_prompt.to_csv(
+    TABLE_DIR / "counts_by_model_prompt.csv",
+    index=False
+)
+
+print("[OK] Saved tables/counts_by_model_prompt.csv")
 
 # =========================
 # PLOT 1: Accuracy vs Difficulty
@@ -185,6 +210,7 @@ if {"direct", "cot"}.issubset(failures.columns):
         (failures["cot"] == 0)
     ]
 
+    # Save failure examples
     failure_examples = df.merge(
         cot_failures[["model", "id"]],
         on=["model", "id"]
@@ -200,5 +226,29 @@ if {"direct", "cot"}.issubset(failures.columns):
     )
 
     print("[OK] Saved figures/cot_failure_examples.csv")
+
+    # =========================
+    # CoT FAILURE COUNTS (PAPER NUMBER)
+    # =========================
+    cot_failure_count = len(cot_failures)
+
+    with open(TABLE_DIR / "cot_failure_count.txt", "w") as f:
+        f.write(str(cot_failure_count))
+
+    print(f"[OK] CoT failure count: {cot_failure_count}")
+
+    # CoT failures by model
+    cot_failures_by_model = (
+        cot_failures.groupby("model")
+                    .size()
+                    .reset_index(name="cot_failure_count")
+    )
+
+    cot_failures_by_model.to_csv(
+        TABLE_DIR / "cot_failures_by_model.csv",
+        index=False
+    )
+
+    print("[OK] Saved tables/cot_failures_by_model.csv")
 
 print("\n=== DONE: Evaluation Complete ===")
