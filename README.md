@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 # COT-HURTS-PERFORMANCE
-=======
+
 # When Chain-of-Thought Breaks Evaluation
 
 This repository accompanies the paper:
@@ -46,4 +45,3 @@ python evaluate_results.py
 ## ⚠️ Takeaway
 
 - Prompting strategy and evaluation design must be treated as a joint system.
->>>>>>> acd130d (Update README and paper to reflect findings on Chain-of-Thought prompting; remove outdated result files)
