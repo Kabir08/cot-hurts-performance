@@ -1,0 +1,11 @@
+model,prompt_type,correct
+llama-3.1-8b-instant,concise_cot,0.05416666666666667
+llama-3.1-8b-instant,cot,0.008333333333333333
+llama-3.1-8b-instant,direct,0.6541666666666667
+llama-3.3-70b-versatile,concise_cot,0.08333333333333333
+llama-3.3-70b-versatile,cot,0.06666666666666667
+llama-3.3-70b-versatile,direct,0.7958333333333333
+meta-llama/llama-4-maverick-17b-128e-instruct,concise_cot,0.0625
+meta-llama/llama-4-maverick-17b-128e-instruct,cot,0.0125
+meta-llama/llama-4-maverick-17b-128e-instruct,direct,0.6
+model,prompt_type,0.0

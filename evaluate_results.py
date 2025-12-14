@@ -8,8 +8,12 @@ from pathlib import Path
 # =========================
 INPUT_FILE = "results.csv"
 OUTPUT_FILE = "scored_results.csv"
+
 FIG_DIR = Path("figures")
+TABLE_DIR = Path("tables")
+
 FIG_DIR.mkdir(exist_ok=True)
+TABLE_DIR.mkdir(exist_ok=True)
 
 # =========================
 # NORMALIZATION
@@ -26,7 +30,7 @@ def normalize(text):
     if text.startswith("no"):
         return "no"
 
-    # extract numeric answers (ints / floats)
+    # numeric extraction (ints / floats)
     numbers = re.findall(r"-?\d+\.?\d*", text)
     if numbers:
         return numbers[0]
@@ -36,7 +40,7 @@ def normalize(text):
     return text.strip()
 
 # =========================
-# LOAD
+# LOAD DATA
 # =========================
 df = pd.read_csv(INPUT_FILE)
 
@@ -51,39 +55,52 @@ df.to_csv(OUTPUT_FILE, index=False)
 print(f"[OK] Scored results written to {OUTPUT_FILE}")
 
 # =========================
-# SUMMARY TABLES
+# SUMMARY TABLES → FILES
 # =========================
-print("\n=== Accuracy by Model × Prompt Type ===")
-summary = (
+
+# Accuracy by model × prompt type
+accuracy_model_prompt = (
     df.groupby(["model", "prompt_type"])["correct"]
-    .mean()
-    .reset_index()
-    .sort_values(["model", "prompt_type"])
+      .mean()
+      .reset_index()
+      .sort_values(["model", "prompt_type"])
 )
-print(summary)
 
-print("\n=== Accuracy by Model × Task ===")
-task_summary = (
+accuracy_model_prompt.to_csv(
+    TABLE_DIR / "accuracy_by_model_prompt.csv",
+    index=False
+)
+
+# Accuracy by model × task
+accuracy_model_task = (
     df.groupby(["model", "task"])["correct"]
-    .mean()
-    .reset_index()
+      .mean()
+      .reset_index()
 )
-print(task_summary)
 
-# =========================
-# CoT DELTA TABLE
-# =========================
+accuracy_model_task.to_csv(
+    TABLE_DIR / "accuracy_by_model_task.csv",
+    index=False
+)
+
+# CoT − Direct delta by model
 pivot = (
     df.groupby(["model", "prompt_type"])["correct"]
-    .mean()
-    .unstack()
+      .mean()
+      .unstack()
 )
 
-if "direct" in pivot.columns and "cot" in pivot.columns:
+if {"direct", "cot"}.issubset(pivot.columns):
     pivot["cot_minus_direct"] = pivot["cot"] - pivot["direct"]
 
-print("\n=== CoT − Direct Accuracy Delta ===")
-print(pivot[["cot_minus_direct"]])
+cot_delta = pivot[["cot_minus_direct"]].reset_index()
+
+cot_delta.to_csv(
+    TABLE_DIR / "cot_delta_by_model.csv",
+    index=False
+)
+
+print("[OK] Saved summary tables to /tables/")
 
 # =========================
 # PLOT 1: Accuracy vs Difficulty
@@ -92,24 +109,29 @@ difficulty_order = ["easy", "medium", "hard"]
 
 diff_df = (
     df.groupby(["prompt_type", "difficulty"])["correct"]
-    .mean()
-    .reset_index()
+      .mean()
+      .reset_index()
 )
 
-plt.figure(figsize=(7,5))
+plt.figure(figsize=(7, 5))
 for ptype in diff_df["prompt_type"].unique():
-    subset = diff_df[diff_df["prompt_type"] == ptype]
+    subset = diff_df[diff_df["prompt_type"] == ptype].copy()
     subset["difficulty"] = pd.Categorical(
         subset["difficulty"],
         categories=difficulty_order,
         ordered=True
     )
     subset = subset.sort_values("difficulty")
-    plt.plot(subset["difficulty"], subset["correct"], marker="o", label=ptype)
+    plt.plot(
+        subset["difficulty"],
+        subset["correct"],
+        marker="o",
+        label=ptype
+    )
 
 plt.xlabel("Difficulty")
 plt.ylabel("Accuracy")
-plt.title("Accuracy vs Difficulty")
+plt.title("Accuracy vs Difficulty (Aggregated Across Models)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
@@ -119,22 +141,27 @@ plt.close()
 print("[OK] Saved figures/accuracy_vs_difficulty.png")
 
 # =========================
-# PLOT 2: Task-wise Accuracy (Direct vs CoT)
+# PLOT 2: Accuracy by Task
 # =========================
 task_plot = (
     df.groupby(["task", "prompt_type"])["correct"]
-    .mean()
-    .reset_index()
+      .mean()
+      .reset_index()
 )
 
-plt.figure(figsize=(8,5))
+plt.figure(figsize=(8, 5))
 for ptype in ["direct", "cot", "concise_cot"]:
     subset = task_plot[task_plot["prompt_type"] == ptype]
-    plt.plot(subset["task"], subset["correct"], marker="o", label=ptype)
+    plt.plot(
+        subset["task"],
+        subset["correct"],
+        marker="o",
+        label=ptype
+    )
 
 plt.xlabel("Task")
 plt.ylabel("Accuracy")
-plt.title("Accuracy by Task")
+plt.title("Accuracy by Task (Aggregated Across Models)")
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
@@ -152,7 +179,7 @@ failures = df.pivot_table(
     values="correct"
 ).reset_index()
 
-if "direct" in failures.columns and "cot" in failures.columns:
+if {"direct", "cot"}.issubset(failures.columns):
     cot_failures = failures[
         (failures["direct"] == 1) &
         (failures["cot"] == 0)
@@ -167,7 +194,11 @@ if "direct" in failures.columns and "cot" in failures.columns:
         failure_examples["prompt_type"].isin(["direct", "cot"])
     ]
 
-    failure_examples.to_csv(FIG_DIR / "cot_failure_examples.csv", index=False)
+    failure_examples.to_csv(
+        FIG_DIR / "cot_failure_examples.csv",
+        index=False
+    )
+
     print("[OK] Saved figures/cot_failure_examples.csv")
 
 print("\n=== DONE: Evaluation Complete ===")

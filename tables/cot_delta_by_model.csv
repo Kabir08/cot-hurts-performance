@@ -1,0 +1,5 @@
+model,cot_minus_direct
+llama-3.1-8b-instant,-0.6458333333333334
+llama-3.3-70b-versatile,-0.7291666666666666
+meta-llama/llama-4-maverick-17b-128e-instruct,-0.5875
+model,

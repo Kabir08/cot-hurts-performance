@@ -1,0 +1,14 @@
+model,task,correct
+llama-3.1-8b-instant,arithmetic,0.25
+llama-3.1-8b-instant,factual,0.2722222222222222
+llama-3.1-8b-instant,reasoning,0.24444444444444444
+llama-3.1-8b-instant,symbolic_logic,0.18888888888888888
+llama-3.3-70b-versatile,arithmetic,0.3
+llama-3.3-70b-versatile,factual,0.3111111111111111
+llama-3.3-70b-versatile,reasoning,0.38333333333333336
+llama-3.3-70b-versatile,symbolic_logic,0.26666666666666666
+meta-llama/llama-4-maverick-17b-128e-instruct,arithmetic,0.25
+meta-llama/llama-4-maverick-17b-128e-instruct,factual,0.25
+meta-llama/llama-4-maverick-17b-128e-instruct,reasoning,0.25555555555555554
+meta-llama/llama-4-maverick-17b-128e-instruct,symbolic_logic,0.14444444444444443
+model,task,0.0
